@@ -59,6 +59,8 @@ class generateDungeon:
         self.cellMap = [[0 for i in range(self.cell_y)] for j in range(self.cell_x)]
         #self.cellMap =  [ [0] * self.cell_y] * self.cell_x
         self.Drawupdates = False
+        self.endgoal = (0, 0)
+        self.MAX_steps = 0
 
     def createMapDraw(self, handler):
         self.GFX = handler
@@ -72,10 +74,20 @@ class generateDungeon:
             for i in range(self.cell_y):
                 for j in range(self.cell_x):
                     self.cellMap[i][j] = random.randint(0,1)
+                    if (self.cellMap[i][j] != 1):
+                        self.MAX_steps += 1
+            self.cell[0][0] = 0
+            self.cellMap[self.cell_y][self.cell_x] = 3
+            self.endgoal = (self.cell_y, self.cell_x)
         else:
             for i in range(self.cell_y):
                 for j in range(self.cell_x):
                     self.cellMap[i][j] = mapin[i][j]
+                    if (self.cellMap[i][j] == 3):
+                        self.endgoal = (i, j)
+                        self.MAX_steps += 1
+                    elif (self.cellMap[i][j] != 1):
+                        self.MAX_steps += 1
 
     def tileCheck(self, x, y):
         if ( (x < 0) or (x >= self.cell_x) or (y < 0) or (y >= self.cell_y) or (self.cellMap[x][y] == 1)):
@@ -118,8 +130,14 @@ class Agent:
             return True;
         else:
             return False;
+    
+    def isFinished(self, endgoal):
+        if (endgoal[0] == self.xPos and endgoal[1] == self.yPos):
+            return True
+        else:
+            return False
 
-map1 = [ [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0] ]
+map1 = [ [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,3] ]
 
 map2 = [ [0,0,0,0,0,0,0,0,0,0], [1,1,1,1,1,1,1,1,1,0], [0,0,0,0,0,0,0,0,0,0], [0,1,1,1,1,1,1,1,1,1], [0,0,0,0,0,0,0,0,0,0], [1,1,1,1,1,1,1,1,1,0], [0,0,0,0,0,0,0,0,0,0], [0,1,1,1,1,1,1,1,1,1], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,3] ]
 
@@ -129,17 +147,37 @@ map3 = [ [0,1,0,0,1,1,1,1,0,0], [0,0,0,0,0,1,1,1,1,0], [0,1,0,1,1,1,1,0,0,1], [0
 # for some reason, if they aren't equal, things break. Who cares though, right?
 GFX = MapDraw(600,600,10,10)
 MG = generateDungeon(10,10)
-MG.buildMap(False, map3)
+
+MG.buildMap(True, [])       #set to false, give it a map above
+
+# Set up agent
 Qagent = Agent(0,0, 10*10)
 MG.setTile(Qagent.xPos, Qagent.yPos, 2);
+
 MG.createMapDraw(GFX)
 GFX.DrawMap(MG.cellMap)
 
-while (True):
-    while (Qagent.Move(random.choice( list(Qagent.Dirs.keys()) ), MG) == False):
-        x = 0
+print(MG.MAX_steps)
 
-    GFX.DrawMap(MG.cellMap)
-    GFX.update()
+for i in range(5):
+    Qagent.xPos = 0
+    Qagent.yPos = 0
+    finished = False
+    moves = 0
+
+    MG.setTile(Qagent.xPos, Qagent.yPos, 2);
+    MG.setTile(MG.endgoal[0], MG.endgoal[1], 3)
+
+    while (not finished):
+        
+        while (Qagent.Move(random.choice( list(Qagent.Dirs.keys()) ), MG) == False):
+            x = 0
+
+        moves+=1
+        finished = Qagent.isFinished(MG.endgoal);
+
+        GFX.DrawMap(MG.cellMap)
+        GFX.update()
+    print("endgoal reached in %d moves\n", moves)
 
 GFX.lock()
