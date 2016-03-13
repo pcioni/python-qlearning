@@ -3,12 +3,13 @@ try:
 except ImportError:
     from tkinter import *
 import random
+import qlearn
 
 class MapDraw:
     Colors = {
         "White"      : "#FFFFFF",
-        "LightGreen" : "#9BF04D",
-        "Black"      : "#000000",
+        "Black" : "#9BF04D",
+        "LightGreen"      : "#000000",
         "Red"        : "#FF0000"
     }
 
@@ -76,7 +77,7 @@ class generateDungeon:
                     self.cellMap[i][j] = random.randint(0,1)
                     if (self.cellMap[i][j] != 1):
                         self.MAX_steps += 1
-            self.cell[0][0] = 0
+            self.cellMap[0][0] = 0
             self.cellMap[self.cell_y][self.cell_x] = 3
             self.endgoal = (self.cell_y, self.cell_x)
         else:
@@ -106,10 +107,23 @@ class Agent:
     def __init__(self, startX, startY, size):
         self.xPos = startX
         self.yPos = startY
-        self.Qvals = [[0 for i in range(size)] for j in range(4)]    #we have Q values for every space, even if we dont use it
+        self.Qvals = [[None for i in range(size)] for j in range(4)]    #we have Q values for every space, even if we dont use it
+
+        self.lastState = None
+        self.lastAction = None
+        self.endGoal = [0,0]
+
+    def getState(self, ):
+        def cellvalue(cell):
+            if  self.xPos == self.endGoal[0] and self.ypos == self.endGoal[1]:
+                return 1
+            else:
+                return 0
+
+    def setEndGoal(self, end):
+        self.endGoal = [end[0], end[1]]
 
     #QVal ( (x,y), a) ==> Qvals[(x*10) + y][action]
-
     #             y----->
     # Qvals = [ x 0,0,0,0,  <= This is how the board looks when displayed
     #           | 0,0,0,0,
@@ -151,18 +165,24 @@ class Agent:
         else:
             return False
 
+    
+
 map1 = [ [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,3] ]
 
 map2 = [ [0,0,0,0,0,0,0,0,0,0], [1,1,1,1,1,1,1,1,1,0], [0,0,0,0,0,0,0,0,0,0], [0,1,1,1,1,1,1,1,1,1], [0,0,0,0,0,0,0,0,0,0], [1,1,1,1,1,1,1,1,1,0], [0,0,0,0,0,0,0,0,0,0], [0,1,1,1,1,1,1,1,1,1], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,3] ]
 
 map3 = [ [0,1,0,0,1,1,1,1,0,0], [0,0,0,0,0,1,1,1,1,0], [0,1,0,1,1,1,1,0,0,1], [0,1,0,0,0,0,0,0,0,0], [1,0,0,0,0,0,0,0,1,0], [1,1,0,1,0,1,1,1,1,0], [1,1,0,1,0,0,0,0,1,1], [1,0,0,0,0,0,0,1,1,0], [0,0,0,1,1,0,0,0,0,0], [0,0,1,1,1,1,0,0,0,3] ]
 
+#10 walls
+map4 = [ [0,0,0,0,0,0,0,0,0,0], [0,0,0,1,1,0,0,0,0,0], [0,0,0,0,0,0,1,0,0,1], [0,0,0,1,1,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,1,1,0,0,0], [0,0,0,0,0,0,0,1,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,1,0,0,0], [0,0,0,0,0,0,0,0,0,3] ]
+
+
 #The last two variables in MapDraw determine how many squares make up a grid;
 # for some reason, if they aren't equal, things break. Who cares though, right?
 GFX = MapDraw(600,600,10,10)
 MG = generateDungeon(10,10)
 
-MG.buildMap(True, [])       #set to false, give it a map above
+MG.buildMap(False, map4)       #set to false, give it a map above
 
 # Set up agent
 Qagent = Agent(0,0, 10*10)
@@ -181,6 +201,7 @@ for i in range(5):
 
     MG.setTile(Qagent.xPos, Qagent.yPos, 2);
     MG.setTile(MG.endgoal[0], MG.endgoal[1], 3)
+    Qagent.setEndGoal(MG.endgoal)
 
     while (not finished):
         
@@ -192,6 +213,6 @@ for i in range(5):
 
         GFX.DrawMap(MG.cellMap)
         GFX.update()
-    print("endgoal reached in %d moves\n", moves)
+    print("endgoal reached in %d moves\n" % moves)
 
 GFX.lock()
