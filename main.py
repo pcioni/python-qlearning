@@ -97,21 +97,23 @@ class generateDungeon:
             return True
 
 class Agent:
-    Dirs = {
-        "up"    : 0,
-        "down"  : 1,
-        "left"  : 2,
-        "right" : 3
+    actions = {
+        0 : "up",
+        1 : "down",
+        2 : "left",
+        3 : "right"
     }
 
-    def __init__(self, startX, startY, size):
+    def __init__(self, startX, startY, size, epsilon = 0.1, alpha = 0.2, gamma = 0.9):
         self.xPos = startX
         self.yPos = startY
-        self.Qvals = [[None for i in range(size)] for j in range(4)]    #we have Q values for every space, even if we dont use it
+        self.Qvals = [[0 for i in range(size)] for j in range(size)]    #we have Q values for every space, even if we dont use it
 
-        self.lastState = None
-        self.lastAction = None
         self.endGoal = [0,0]
+
+        self.epsilon = epsilon
+        self.alpha = alpha
+        self.gamma = gamma
 
     def getState(self, ):
         def cellvalue(cell):
@@ -165,7 +167,49 @@ class Agent:
         else:
             return False
 
-    
+############################################
+
+    def getQ(self, x, y):
+        v = []
+        if x > 0:
+            v.append( self.Qvals[x-1][y])
+        if x < 9:
+            print(x)
+            v.append( self.Qvals[x+1][y])
+        if y > 0:
+            v.append( self.Qvals[x][y-1])
+        if y < 9:
+            v.append( self.Qvals[x][y+1])
+        return v
+
+    def learnQ(self, state, action, reward, value):
+        oldv = self.q.get((state, action), None)
+        if oldv is None:
+            self.q[(state, action)] = reward
+        else:
+            self.q[(state, action)] = oldv + self.alpha * (value - oldv)
+
+    def chooseAction(self, state):
+        if random.random() < self.epsilon:
+            action = random.choice(self.actions)
+        else:
+            q = self.getQ(self.xPos, self.yPos)
+            maxQ = max(q)
+            count = q.count(maxQ)
+            if count > 1:
+                best = [i for i in range(len(q)) if q[i] == maxQ]
+                i = random.choice(best)
+            else:
+                i = q.index(maxQ)
+            action = self.actions[i]
+
+        return action
+
+    def learn(self, state1, action1, reward, state2):
+        maxqnew = max([self.getQ(state2, a) for a in self.actions])
+        self.learnQ(state1, action1, reward, reward + self.gamma*maxqnew)
+
+#########################################################
 
 map1 = [ [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0,3] ]
 
@@ -185,7 +229,7 @@ MG = generateDungeon(10,10)
 MG.buildMap(False, map4)       #set to false, give it a map above
 
 # Set up agent
-Qagent = Agent(0,0, 10*10)
+Qagent = Agent(0,0, 10)
 MG.setTile(Qagent.xPos, Qagent.yPos, 2);
 
 MG.createMapDraw(GFX)
@@ -205,7 +249,8 @@ for i in range(5):
 
     while (not finished):
         
-        while (Qagent.Move(random.choice( list(Qagent.Dirs.keys()) ), MG) == False):
+        while Qagent.Move( Qagent.chooseAction( Qagent.getState() ), MG) == False:
+        #while (Qagent.Move(random.choice( list(Qagent.actions.keys()) ), MG) == False):
             x = 0
 
         moves+=1
