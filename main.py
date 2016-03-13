@@ -108,6 +108,20 @@ class Agent:
         self.yPos = startY
         self.Qvals = [[0 for i in range(size)] for j in range(4)]    #we have Q values for every space, even if we dont use it
 
+    #QVal ( (x,y), a) ==> Qvals[(x*10) + y][action]
+
+    #             y----->
+    # Qvals = [ x 0,0,0,0,  <= This is how the board looks when displayed
+    #           | 0,0,0,0,
+    #           | 0,0,0,0,
+    #           v 0,0,0,0]
+    
+    def setQval(x, y, a, xsize, v):
+        self.Qvals[(x*xsize) + y][a] = v
+
+    def getQval(x, y, a, xsize):
+        return self.Qvals[(x*xsize) + y][a]
+
     def Move(self, dir, mg):
         dx = 0
         dy = 0
