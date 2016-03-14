@@ -98,10 +98,10 @@ class generateDungeon:
 
 class Agent:
     actions = {
-        0 : "left",
-        1 : "right",
-        2 : "up",
-        3 : "down"
+        0 : "up",
+        1 : "down",
+        2 : "left",
+        3 : "right"
     }
 
     def __init__(self, startX, startY, size, epsilon = 0.1, alpha = 0.2, gamma = 0.9):
@@ -134,7 +134,7 @@ class Agent:
     
     def setQval(self):
         if self.xPos != self.endGoal[0] or self.yPos != self.endGoal[1]:
-            self.Qvals[self.xPos][self.yPos] -= 1
+            self.Qvals[self.xPos][self.yPos] -= 1 * self.alpha
 
     def Move(self, dir, mg):
         dx = 0
@@ -199,7 +199,7 @@ class Agent:
             else:
                 i = q.index(maxQ)
             action = self.actions[i]
-            print (q, maxQ, i, action)
+            #print (q, maxQ, i, action) ######################MASTER DEBUG
         return action
 
     def learn(self, state1, action1, reward, state2):
@@ -223,7 +223,7 @@ map4 = [ [0,0,0,0,0,0,0,0,0,0], [0,0,0,1,1,0,0,0,0,0], [0,0,0,0,0,0,1,0,0,1], [0
 GFX = MapDraw(600,600,10,10)
 MG = generateDungeon(10,10)
 
-MG.buildMap(False, map4)       #set to false, give it a map above
+MG.buildMap(False, map1)       #set to false, give it a map above
 
 # Set up agent
 Qagent = Agent(0,0, 10)
