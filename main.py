@@ -98,10 +98,10 @@ class generateDungeon:
 
 class Agent:
     actions = {
-        0 : "up",
-        1 : "down",
-        2 : "left",
-        3 : "right"
+        0 : "left",
+        1 : "right",
+        2 : "up",
+        3 : "down"
     }
 
     def __init__(self, startX, startY, size, epsilon = 0.1, alpha = 0.2, gamma = 0.9):
@@ -132,27 +132,25 @@ class Agent:
     #           | 0,0,0,0,
     #           v 0,0,0,0]
     
-    def setQval(x, y, a, xsize, v):
-        self.Qvals[(x*xsize) + y][a] = v
-
-    def getQval(x, y, a, xsize):
-        return self.Qvals[(x*xsize) + y][a]
+    def setQval(self):
+        if self.xPos != self.endGoal[0] or self.yPos != self.endGoal[1]:
+            self.Qvals[self.xPos][self.yPos] -= 1
 
     def Move(self, dir, mg):
         dx = 0
         dy = 0
-        if (dir == "up"):
+        if dir == "up":
             dx = -1
-        elif (dir == "down"):
+        elif dir == "down":
             dx = 1
-        elif (dir == "left"):
+        elif dir == "left":
             dy = -1
-        elif (dir == "right"):
+        elif dir == "right":
             dy = 1
         else:
             print("ERROR: not a direction")
 
-        if (mg.tileCheck(self.xPos+dx, self.yPos+dy) ):
+        if mg.tileCheck(self.xPos+dx, self.yPos+dy):
             mg.setTile(self.xPos, self.yPos, 0);
             self.xPos += dx
             self.yPos += dy
@@ -174,7 +172,6 @@ class Agent:
         if x > 0:
             v.append( self.Qvals[x-1][y])
         if x < 9:
-            print(x)
             v.append( self.Qvals[x+1][y])
         if y > 0:
             v.append( self.Qvals[x][y-1])
@@ -202,7 +199,7 @@ class Agent:
             else:
                 i = q.index(maxQ)
             action = self.actions[i]
-
+            print (q, maxQ, i, action)
         return action
 
     def learn(self, state1, action1, reward, state2):
@@ -248,10 +245,9 @@ for i in range(5):
     Qagent.setEndGoal(MG.endgoal)
 
     while (not finished):
-        
-        while Qagent.Move( Qagent.chooseAction( Qagent.getState() ), MG) == False:
-        #while (Qagent.Move(random.choice( list(Qagent.actions.keys()) ), MG) == False):
-            x = 0
+
+        Qagent.Move( Qagent.chooseAction( Qagent.getState() ), MG)
+        Qagent.setQval()
 
         moves+=1
         finished = Qagent.isFinished(MG.endgoal);
